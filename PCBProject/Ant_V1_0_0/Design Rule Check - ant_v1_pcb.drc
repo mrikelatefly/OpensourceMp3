@@ -1,0 +1,36 @@
+Protel Design System Design Rule Check
+PCB File : C:\Users\E.B. Zhou\Desktop\Ant V0.0.1\PCB_New\Ant_V1_0_0\Ant_V1_PCB.PcbDoc
+Date     : 9/1/2019
+Time     : 1:37:06 PM
+
+Processing Rule : Short-Circuit Constraint (Allowed=No) (All),(All)
+Rule Violations :0
+
+Processing Rule : Un-Routed Net Constraint ( (All) )
+   Violation between Un-Routed Net Constraint: Net VCC3.3V Between Track (691.132mil,1078.858mil)(719.274mil,1107mil) on Top Layer And Track (779mil,1107mil)(779mil,1232mil) on Top Layer 
+Rule Violations :1
+
+Processing Rule : Clearance Constraint (Gap=7mil) (All),(All)
+Rule Violations :0
+
+Processing Rule : Power Plane Connect Rule(Relief Connect )(Expansion=20mil) (Conductor Width=10mil) (Air Gap=10mil) (Entries=4) (All)
+Rule Violations :0
+
+Processing Rule : Width Constraint (Min=8mil) (Max=12mil) (Preferred=10mil) (All)
+Rule Violations :0
+
+Processing Rule : Modified Polygon (Allow modified: No), (Allow shelved: No)
+Rule Violations :0
+
+Processing Rule : Width Constraint (Min=10mil) (Max=50mil) (Preferred=30mil) (InNet('GND'))
+Rule Violations :0
+
+Processing Rule : Width Constraint (Min=10mil) (Max=50mil) (Preferred=30mil) (All)
+Rule Violations :0
+
+Processing Rule : Width Constraint (Min=10mil) (Max=50mil) (Preferred=30mil) (All)
+Rule Violations :0
+
+
+Violations Detected : 1
+Time Elapsed        : 00:00:04
