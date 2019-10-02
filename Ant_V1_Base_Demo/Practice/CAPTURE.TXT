@@ -1,0 +1,64 @@
+#include"stm32f10x_it.h"
+#include"sys.h"
+#include"usart.h"
+#include "delay.h"
+#include "capture.h"
+#include "PWM.h"
+//#include "stdlib.h"
+
+extern u8  TIM3CH1_CAPTURE_STA;	//输入捕获状态		    				
+extern u16	TIM3CH1_CAPTURE_VAL;	//输入捕获值
+
+int main()
+{
+	int t=0;
+	delay_init();
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); //设置NVIC中断分组
+	uart_init(38400);
+	printf("I am working now!\n");
+	TIM3_Cap_Init(0xffff,72-1);
+	//TIM3_PWM_Init(2000-1,72-1);//输出是PB5
+	//SetCCR2(222);//2ms的高电平
+	
+	while(1)
+	{
+		delay_ms(50);
+		
+		if(TIM3CH1_CAPTURE_STA&0x80)
+		{
+				t=TIM3CH1_CAPTURE_STA&0x3f;
+				t*=65536;
+				t+=TIM3CH1_CAPTURE_VAL;
+				printf("上升沿时间：%d us\n\n",t);
+				TIM3CH1_CAPTURE_STA=0;
+				TIM3CH1_CAPTURE_VAL=0;
+		}
+		
+		
+	}
+}
+
+
+/*
+void Pin_Test()
+{
+	
+	GPIO_InitTypeDef GPIO_InitStructure; 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);  //使能GPIOA GPIOB时钟
+	
+	GPIO_InitStructure.GPIO_Pin =	GPIO_Pin_All; 
+	GPIO_InitStructure.GPIO_Mode =	GPIO_Mode_Out_OD;  //推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	
+	//全部拉高电平
+	GPIO_SetBits(GPIOA,GPIO_Pin_All);
+	GPIO_SetBits(GPIOB,GPIO_Pin_All);
+}
+
+
+*/
+
+

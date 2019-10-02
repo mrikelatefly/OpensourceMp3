@@ -1,0 +1,42 @@
+#include"stm32f10x_it.h"
+#include"sys.h"
+#include"usart.h"
+#include "delay.h"
+#include "LCD.h"
+
+int main()
+{
+	
+	/*
+	此处是一个管脚的电压测试管脚申明
+	*/
+	GPIO_InitTypeDef GPIO_InitStructure;
+	GPIO_InitStructure.GPIO_Pin =GPIO_Pin_7; 
+	GPIO_InitStructure.GPIO_Mode =	GPIO_Mode_Out_OD;  //推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	GPIO_SetBits(GPIOB,GPIO_Pin_7);
+	
+	
+	uart_init(115200);
+	delay_init();
+	Pin_Init();
+	delay_us(10);
+	Lcd_Init();
+	delay_ms(500);
+	printf("I am working now\n");
+	while(1)
+	{
+		delay_ms(100);
+		LCD_Clear(BLACK);
+		delay_ms(100);
+		LCD_Clear(RED);
+		delay_ms(100);
+		LCD_Clear(BLUE);
+		delay_ms(100);
+		LCD_Clear(YELLOW);
+	}
+	
+}
+
+

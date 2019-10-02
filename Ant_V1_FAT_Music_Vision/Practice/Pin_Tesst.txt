@@ -1,0 +1,43 @@
+#include"stm32f10x_it.h"
+#include"sys.h"
+#include"usart.h"
+#include "delay.h"
+void Pin_Test()
+{
+	GPIO_InitTypeDef GPIO_InitStructure; 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);  //使能GPIOA GPIOB时钟
+	
+	GPIO_InitStructure.GPIO_Pin =	GPIO_Pin_All; 
+	GPIO_InitStructure.GPIO_Mode =	GPIO_Mode_Out_OD;  //推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	
+	//全部拉高电平
+	GPIO_SetBits(GPIOA,GPIO_Pin_All);
+	GPIO_SetBits(GPIOB,GPIO_Pin_All);
+}
+int main()
+{
+	uart_init(115200);
+	delay_init();
+	delay_us(10);
+	printf("I am working now\n");
+	
+	while(1)
+	{
+			
+		delay_ms(200);
+		GPIO_SetBits(GPIOA,GPIO_Pin_All);
+		GPIO_SetBits(GPIOB,GPIO_Pin_All);
+		printf("I have set all GPIOA GPIOB pin High\n\r");
+		delay_ms(200);
+		GPIO_ResetBits(GPIOA,GPIO_Pin_All);
+		GPIO_ResetBits(GPIOB,GPIO_Pin_All);
+		printf("I have set all GPIOA GPIOB pin Low\n\r");
+	}
+	
+}
+
+

@@ -1,0 +1,77 @@
+#include"stm32f10x_it.h"
+#include"sys.h"
+#include"usart.h"
+#include "delay.h"
+#include "capture.h"
+extern u8  TIM3CH1_CAPTURE_STA;	//输入捕获状态		    				
+extern u16	TIM3CH1_CAPTURE_VAL;	//输入捕获值
+void TringInit()
+{
+	
+	GPIO_InitTypeDef GPIO_InitStructure;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);  //使能GPIOA时钟
+	
+	GPIO_InitStructure.GPIO_Pin  = GPIO_Pin_7;  //PA7清除之前设置  
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; //PA7 输入  
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_ResetBits(GPIOA,GPIO_Pin_7);						 //PA7 下拉
+}
+
+int main()
+{
+	float s=0;
+	int temp=0;
+	delay_init();
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2); //设置NVIC中断分组
+	uart_init(38400);
+	TIM3_Cap_Init(0xffff,18-1);//此时钟源为36M以72M分频会出现四倍的误差
+	printf("I am working now!\n");
+	TringInit();
+	while(1)
+	{
+		delay_ms(50);
+		GPIO_SetBits(GPIOA,GPIO_Pin_7);
+		delay_us(100);
+		GPIO_ResetBits(GPIOA,GPIO_Pin_7);
+		delay_ms(100);
+		if(TIM3CH1_CAPTURE_STA&0x80)//完成捕获
+		{
+				temp=TIM3CH1_CAPTURE_STA&0x3f;
+				temp*=65535;
+				temp+=TIM3CH1_CAPTURE_VAL;
+				printf("Time:%d us    \n",temp);
+				TIM3CH1_CAPTURE_STA=0;	//输入捕获状态		    				
+				TIM3CH1_CAPTURE_VAL=0;
+				//temp*=4;
+				s=(temp*1e-6)*340.0+2;//最后加2是为了平衡仪器本身的误差
+				s*=100;
+				printf("\ndistance:%lfcm\n",s);
+		}
+		delay_us(100);
+	}
+}
+
+
+/*
+void Pin_Test()
+{
+	
+	GPIO_InitTypeDef GPIO_InitStructure; 
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA|RCC_APB2Periph_GPIOB, ENABLE);  //使能GPIOA GPIOB时钟
+	
+	GPIO_InitStructure.GPIO_Pin =	GPIO_Pin_All; 
+	GPIO_InitStructure.GPIO_Mode =	GPIO_Mode_Out_OD;  //推挽输出
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
+	
+	//全部拉高电平
+	GPIO_SetBits(GPIOA,GPIO_Pin_All);
+	GPIO_SetBits(GPIOB,GPIO_Pin_All);
+}
+
+
+*/
+
+

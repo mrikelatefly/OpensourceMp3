@@ -1,0 +1,230 @@
+#include "stm32f10x_it.h"
+#include "sys.h"
+#include "usart.h"
+#include "delay.h"
+#include "SPI.h"
+#include "LCD_2_0.h"
+#include "FrameBox.h"
+#include "w25qxx.h"
+#include "MicroSD.h"
+#include "Key.h"
+#include "malloc.h" 
+#include "StringOperation.h"
+#include "vs10xx.h"	
+#include "ff.h"  
+#include "exfuns.h"
+/***************************************************************************************
+由于这里的硬件的实验单项都测试过了所以这里将进行所有的实验以及文字库的集成fat的集成这里也将会是
+一个漫长的过程
+硬件的列表如下：
+LED
+LCD
+time
+uart
+key
+W25Q128
+MicroSD
+VS1053B
+
+
+集成Fat功能
+需要
+对应接口 
+1.flash以及MicroSD
+2.修改ffconf的配置文件
+3.测试是否有问题
+
+
+****************************************************************************************/
+u16 color=0x000;
+extern char MicroSDDataBuff[512];
+
+
+ /*******变量定义*****/
+FIL fil;
+FRESULT res;
+UINT bww;
+void LED_Init(){
+	GPIO_InitTypeDef GPIO_InitStructure;
+	
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+	
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	GPIO_SetBits(GPIOC,GPIO_Pin_13);
+	
+}
+
+void MicroSDTest()
+{
+	//这是在内存卡初始化以后的测试进行读写如果不成功还是从读写序列号开始吧
+	//u8 MicroSDReadDisk(u8*buf,u32 sector,u8 cnt);
+	// u8 MicroSDWriteDisk(u8*buf,u32 sector,u8 cnt);
+	 MicroSDWriteDisk((u8 *)"Hello I here did you find me!!!",2,1);
+	 delay_ms(200);
+	 MicroSDReadDisk((u8 *)MicroSDDataBuff,2,1);
+   printf("MicroSD read is:%s!!!!\n\n",MicroSDDataBuff);
+	
+}
+void W25Q128TEST(){
+	char arr[100]={"this is a w25q128 test!!!"};
+	//W25QXX_Write((u8 *)arr,1000,sizeof(arr));
+	EmptyString(arr);
+	W25QXX_Read((u8 *)arr,1000,sizeof(arr));
+	printf("W25QRead:%s\n\n",arr);
+	
+}
+
+void FatTest(){
+	
+	res=f_open (&fil,"0:/message.txt", FA_CREATE_ALWAYS|FA_WRITE);	
+	 
+	f_write (&fil, " SD_CARD test1 \r\n", sizeof("SD_CARD test1 ")+2, &bww);
+	f_write (&fil, " SD_CARD test2 \r\n", sizeof("SD_CARD test2 ")+2, &bww);
+	f_write (&fil, " SD_CARD test3 \r\n", sizeof("SD_CARD test3 ")+2, &bww);
+	f_write (&fil, " SD_CARD test4 \r\n", sizeof("SD_CARD test4 ")+2, &bww);
+	f_write (&fil, " SD_CARD test5 \r\n", sizeof("SD_CARD test5 ")+2, &bww);
+	
+	f_close(&fil);
+	
+	
+	res=f_open (&fil,"0:/message.txt", FA_CREATE_ALWAYS|FA__WRITTEN);	
+	 
+	f_write (&fil, " SD_CARD test6 \r\n", sizeof("SD_CARD test6 ")+2, &bww+100);
+	f_write (&fil, " SD_CARD test7 \r\n", sizeof("SD_CARD test7 ")+2, &bww+100);
+	f_write (&fil, " SD_CARD test8 \r\n", sizeof("SD_CARD test8 ")+2, &bww+100);
+	f_write (&fil, " SD_CARD test9 \r\n", sizeof("SD_CARD test9 ")+2, &bww+100);
+	f_write (&fil, " SD_CARD test0 \r\n", sizeof("SD_CARD test0 ")+2, &bww+100);
+	
+	f_close(&fil);
+}
+void getMicroSDInfo()
+{
+	u32 total,free,retry=0;
+	while(retry<0xff&&exf_getfree((u8 *)"0",&total,&free))
+	{
+		retry++;
+		delay_ms(10);
+	};//得到SD卡的总容量和剩余容量
+	//检测SD卡成功 											    
+	printf("SD Card OK\n");
+	printf("SD Total Size:%d MB\n",total>>10);	 
+	printf("SD  Free Size:%d MB\n",free>>10); 
+}
+int main()
+{
+		//char arr[100]="this is a test about frameveiw and you will see this display about in this windows!";
+		char key=0x80;
+		//char res=0xff;
+		//3333u32 sd_size;	
+		u32 retry=0;	 
+		NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+		SPI2_Init();
+		SPI1_Init();
+		uart_init(115200);
+		delay_init();
+		W25QXX_Init();
+		
+		
+		LED_Init();
+		VS_Init();
+		KeyInit();
+		
+		LCD_Init();
+		my_mem_init(0);
+		exfuns_init();
+		f_mount(fs[0],"0:",1); 
+		
+		
+		
+		printf("I am working now\n\n");
+		
+		while(MicroSDInit()&&retry<0xff){
+			delay_ms(10);
+			retry++;
+		}
+		if(retry==0xff){
+			printf("MicroSD init Error!\n");
+		}else
+			printf("MicroSD init Successfully,retry%d!\n",retry);
+		LCD_Fill(10,10,150,150,LGRAY);
+	
+		FrameStart();
+		delay_ms(500);
+		LCD_Clear(WHITE);
+		FrameDrawCircle(100,100,50,RED);
+		FrameShowString(0,150,176,20,16,(u8 *)"this is frame test!!!!",BLACK);
+		//MicroSDTest();
+		W25Q128TEST();
+		delay_ms(300);
+		while(1){
+				if(USART_RX_STA&0x8000)
+				{
+					if(StringEqual("test",(char *)USART_RX_BUF))
+					{
+						printf("Ram Test:0X%04X\r\n",VS_Ram_Test());//打印RAM测试结果	
+						printf("This is a StringOperation test!!!\n");
+						//LCD_Fill(0,0,50,50,WHITE);
+					}else if(StringEqual("low",(char *)USART_RX_BUF))
+					{
+						printf("GPIO set low!!!\n");
+						GPIO_ResetBits(GPIOC,GPIO_Pin_13|GPIO_Pin_0|GPIO_Pin_1);
+						GPIO_ResetBits(GPIOA,GPIO_Pin_8);
+					}else if(StringEqual("high",(char *)USART_RX_BUF))
+					{
+						printf("GPIO set high!!!\n");
+						GPIO_SetBits(GPIOC,GPIO_Pin_13|GPIO_Pin_0|GPIO_Pin_1);
+						GPIO_SetBits(GPIOA,GPIO_Pin_8);
+					}else if(StringEqual("reset",(char *)USART_RX_BUF))
+					{
+						printf("LCD init!!!\n");
+						LCD_Init();
+					}
+					else if(StringEqual("sin",(char *)USART_RX_BUF))
+					{
+						printf("Vs1053B sin test!!!\n");
+						VS_Sine_Test();
+						delay_ms(500);
+					}
+					AddMessage((char *)USART_RX_BUF);
+					USART_RX_BUF[0]='\0';
+					USART_RX_STA=0;
+				}
+				delay_ms(10);
+				//VS_Sine_Test();
+				key=GetKeyCilk();
+				switch(key){
+					case KEY_Up:
+						printf("you pushed KEY_Up button!\n");
+						printf("Ram Test:0X%04X\r\n",VS_Ram_Test());
+						break;
+					case KEY_Down:
+						printf("you pushed KEY_Down button!\n");
+						VS_Sine_Test();
+						break;
+					case KEY_Left:
+						printf("you pushed KEY_Left button!\n");
+						FrameStart();
+						break;
+					case KEY_Right:
+						printf("you pushed KEY_Right button!\n");
+						FramePlay();
+						break;
+					case KEY_Ok:
+						printf("you pushed KEY_Ok button!\n");
+						FrameTest();
+						break;
+					case KEY_Back:
+						printf("you pushed button!\n");
+						FatTest();
+						getMicroSDInfo();
+						break;
+					
+					
+			}
+		}
+}
+
+
